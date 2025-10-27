@@ -2,6 +2,39 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import logging
+from contextlib import asynccontextmanager
+
+from app.api.routes import sales
+from app.services.datamart import get_datamart_service
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Contexto del ciclo de vida de la aplicación.
+    - Código antes del yield: se ejecuta al INICIAR
+    - Código después del yield: se ejecuta al CERRAR
+    """
+    # ========== STARTUP ==========
+    logger.info("Iniciando Sales Datamart API...")
+    logger.info("Documentación disponible en: http://localhost:8000/docs")
+
+    try:
+        logger.info("📂 Cargando datamart...")
+        datamart_service = get_datamart_service()
+        logger.info("Datamart cargado exitosamente al inicio")
+    except Exception as e:
+        logger.error(f"Error al cargar datamart: {e}")
+        raise
+
+    yield
+
+    logger.info("errando CSales Datamart API...")
 
 app = FastAPI(
     title="Sales Datamart API",
@@ -67,7 +100,8 @@ Esta API proporciona acceso seguro a datos analíticos de ventas con las siguien
     docs_url="/docs",  
     redoc_url="/redoc",  
     openapi_url="/api/v1/openapi.json",  
-    
+    lifespan=lifespan,
+
     openapi_tags=[
         {
             "name": "authentication",
@@ -88,14 +122,36 @@ Esta API proporciona acceso seguro a datos analíticos de ventas con las siguien
     ],
 )
 
+# Configurar CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-@app.get("/")
-def root():
+# Incluir routers
+app.include_router(sales.router)
+
+@app.get("/", tags=["health"])
+async def root():
+    """Endpoint raíz - información básica del API"""
     return {
-        "mensaje": "Bienvenido a mi API",
+        "message": "Sales Datamart API",
+        "version": "1.0.0",
+        "status": "online",
         "docs": "/docs",
         "endpoints": {
-            "sales": "/sales",
-            "auth": "/auth"
+            "sales_by_employee": "/api/v1/sales/by-employee"
         }
+    }
+
+@app.get("/health", tags=["health"])
+async def health_check():
+    """Health check - verificar estado del servicio"""
+    return {
+        "status": "healthy",
+        "service": "Sales Datamart API",
+        "version": "1.0.0"
     }
