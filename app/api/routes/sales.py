@@ -5,6 +5,7 @@ import logging
 from app.models.responses import EmployeeSalesResponse, ProductSalesResponse, StoreSalesResponse
 from app.services.datamart import get_datamart_service, DatamartService
 from app.dependencies import get_current_datamart
+from app.services.auth_service import get_current_user
 
 router = APIRouter(prefix = "/api/v1/sales", tags=["sales-by-period"])
 
@@ -14,6 +15,8 @@ router = APIRouter(prefix = "/api/v1/sales", tags=["sales-by-period"])
     tags=["sales-by-period"],
     description="""
     Consulta las ventas realizadas por un empleado específico en un rango de fechas.
+    
+     **Requiere autenticación JWT**
     
     Parámetros:
     - `key_employee`: ID del empleado en formato "1|343" (KeyEmployee del datamart)
@@ -52,7 +55,8 @@ async def get_sales_by_employee(
         description="Fecha de fin del periodo",
         example="2023-11-30"
     ),
-    datamart_service: DatamartService = Depends(get_current_datamart)
+    datamart_service: DatamartService = Depends(get_current_datamart),
+    current_user: Dict = Depends(get_current_user)
 ) -> EmployeeSalesResponse:
     try:
         # Validar rango de fechas
@@ -88,6 +92,8 @@ async def get_sales_by_employee(
     tags=["sales-by-period"],
     description="""
     Consulta las ventas de un producto específico en un rango de fechas.
+    
+     **Requiere autenticación JWT**
 
     Parámetros:
     - `key_product`: ID del producto en formato "1|44733" (KeyProduct del datamart)
@@ -134,7 +140,8 @@ async def get_sales_by_product(
             description="Fecha de fin del periodo",
             example="2023-11-30"
         ),
-        datamart_service: DatamartService = Depends(get_current_datamart)
+        datamart_service: DatamartService = Depends(get_current_datamart),
+        current_user: Dict = Depends(get_current_user)
 ) -> ProductSalesResponse:
     """
     Endpoint para obtener ventas de un producto en un periodo.
@@ -176,6 +183,8 @@ async def get_sales_by_product(
     tags=["sales-by-period"],
     description="""
     Consulta las ventas de una tienda específica en un rango de fechas.
+    
+     **Requiere autenticación JWT**
 
     Parámetros:
     - `key_store`: ID de la tienda en formato "1|023" (KeyStore del datamart)
@@ -220,7 +229,8 @@ async def get_sales_by_store(
         description="Fecha de fin del periodo",
         example="2023-11-30"
     ),
-    datamart_service: DatamartService = Depends(get_current_datamart)
+    datamart_service: DatamartService = Depends(get_current_datamart),
+    current_user: Dict = Depends(get_current_user)
 ) -> StoreSalesResponse:
     """
     Endpoint para obtener ventas de una tienda en un periodo.
@@ -255,8 +265,3 @@ async def get_sales_by_store(
         )
 
 
-
-@router.get("/employee-summary")
-async def get_sales_employee_summary(key_employee: str = None):
-    # TODO: Implement the logic to get sales employee summary
-    pass

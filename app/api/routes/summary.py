@@ -3,7 +3,7 @@ from datetime import date
 from typing import Dict, Optional
 import logging
 from app.models.responses import EmployeeSummaryResponse, ProductSummaryResponse, StoreSummaryResponse
-
+from app.services.auth_service import get_current_user
 from app.services.datamart import get_datamart_service, DatamartService
 from app.dependencies import get_current_datamart
 
@@ -17,6 +17,8 @@ router = APIRouter(prefix = "/api/v1/sales", tags=["sales-aggregations"])
     tags=["sales-aggregations"],
     description="""
     Calcula el total y promedio de ventas por empleado.
+    
+     **Requiere autenticación JWT**
 
     Parámetros:
     - `key_employee`: (Opcional) ID del empleado en formato "1|343"
@@ -53,7 +55,8 @@ async def get_employee_summary(
             description="ID del empleado (formato: '1|343'). Dejar vacío para resumen de todos",
             example="1|343"
         ),
-        datamart_service: DatamartService = Depends(get_datamart_service)
+        datamart_service: DatamartService = Depends(get_datamart_service),
+        current_user: Dict = Depends(get_current_user)
 ) -> EmployeeSummaryResponse:
     """
     Endpoint para obtener resumen de ventas (total y promedio) por empleado.
@@ -84,6 +87,8 @@ async def get_employee_summary(
     summary="Resumen de ventas por producto (Total y Promedio)",
     description="""
     Calcula el total y promedio de ventas por producto.
+    
+     **Requiere autenticación JWT**
 
     Parámetros:
     - `key_product`: (Opcional) ID del producto en formato "1|44733"
@@ -121,7 +126,8 @@ async def get_product_summary(
             description="ID del producto (formato: '1|44733'). Dejar vacío para resumen de todos",
             example="1|44733"
         ),
-        datamart_service: DatamartService = Depends(get_datamart_service)
+        datamart_service: DatamartService = Depends(get_datamart_service),
+        current_user: Dict = Depends(get_current_user)
 ) -> ProductSummaryResponse:
     """
     Endpoint para obtener resumen de ventas (total y promedio) por producto.
@@ -152,6 +158,8 @@ async def get_product_summary(
     tags=["sales-aggregations"],
     description="""
     Calcula el total y promedio de ventas por tienda.
+    
+     **Requiere autenticación JWT**
 
     **Parámetros:**
     - `key_store`: (Opcional) ID de la tienda en formato "1|023"
@@ -189,7 +197,8 @@ async def get_store_summary(
             description="ID de la tienda (formato: '1|023'). Dejar vacío para resumen de todas",
             example="1|023"
         ),
-        datamart_service: DatamartService = Depends(get_datamart_service)
+        datamart_service: DatamartService = Depends(get_datamart_service),
+        current_user: Dict = Depends(get_current_user)
 ) -> StoreSummaryResponse:
     """
     Endpoint para obtener resumen de ventas (total y promedio) por tienda.
