@@ -90,7 +90,6 @@ Esta API proporciona acceso seguro a datos analíticos de ventas con las siguien
     version="1.0.0",
     contact={
         "name": "Danilo Herazo Acevedo",
-        "url": "https://www.getceles.com/",
         "email": "danilo.herazo@getceles.com",
     },
     license_info={
