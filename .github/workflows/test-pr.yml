@@ -1,0 +1,47 @@
+name: Test Pull Request
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test-pr:
+    name: Test PR
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout PR code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Create test fixtures
+        run: |
+          python create_test_parquet.py
+
+      - name: Run tests
+        run: |
+          pytest tests/unit/ -v --cov=app --cov-report=term
+
+      - name: Comment PR with results
+        uses: actions/github-script@v6
+        if: always()
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: 'Tests passed successfully!'
+            })
