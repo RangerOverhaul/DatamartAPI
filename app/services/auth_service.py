@@ -1,5 +1,5 @@
 import logging
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, timezone
 from typing import Optional
 
 import jwt
@@ -15,14 +15,15 @@ def create_jwt_token(user_data: dict) -> str:
     Crea un JWT token personalizado con la información del usuario
     """
     expires_delta = timedelta(minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES)
-    expire = datetime.now() + expires_delta
+    expire = datetime.now(timezone.utc) + expires_delta
 
     payload = {
         "sub": user_data.get("uid"),
         "email": user_data.get("email"),
         "email_verified": user_data.get("email_verified", False),
         "exp": expire,
-        "type": "access"
+        "type": "access",
+        "iat": datetime.now(timezone.utc)
     }
 
     token = jwt.encode(
