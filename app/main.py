@@ -4,7 +4,7 @@ from fastapi.responses import JSONResponse
 import logging
 from contextlib import asynccontextmanager
 
-from app.api.routes import sales
+from app.api.routes import sales, auth, summary
 from app.services.datamart import get_datamart_service
 
 logging.basicConfig(
@@ -25,7 +25,7 @@ async def lifespan(app: FastAPI):
     logger.info("Documentación disponible en: http://localhost:8000/docs")
 
     try:
-        logger.info("📂 Cargando datamart...")
+        logger.info("Cargando datamart...")
         datamart_service = get_datamart_service()
         logger.info("Datamart cargado exitosamente al inicio")
     except Exception as e:
@@ -133,6 +133,8 @@ app.add_middleware(
 
 # Incluir routers
 app.include_router(sales.router)
+app.include_router(auth.router)
+app.include_router(summary.router)
 
 @app.get("/", tags=["health"])
 async def root():
@@ -143,10 +145,15 @@ async def root():
         "status": "online",
         "docs": "/docs",
         "endpoints": {
+            "auth": "/api/v1/auth/login",
+            "self": "/api/v1/auth/self",
+            "verify": "/api/v1/auth/verify",
             "sales_by_employee": "/api/v1/sales/by-employee",
             "employee_summary": "/api/v1/sales/employee-summary",
             "sales_by_product": "/api/v1/sales/by-product",
+            "products_summary": "/api/v1/sales/products-summary",
             "sales_by_store": "/api/v1/sales/by-store",
+            "store_summary": "/api/v1/sales/store-summary",
         }
     }
 

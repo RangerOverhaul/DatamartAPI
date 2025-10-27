@@ -127,3 +127,33 @@ class ProductSummaryResponse(BaseModel):
                 "records_count": 50
             }
         }
+
+class StoreSummaryResponse(BaseModel):
+    """Modelo para la respuesta de resumen de ventas por tienda"""
+    success: bool = Field(default=True, description="Indica si la operación fue exitosa")
+    key_store: Optional[str] = Field(None, description="ID de la tienda o None para todas")
+    total_amount: float = Field(..., description="Monto total de ventas")
+    average_amount: float = Field(..., description="Promedio de ventas por transacción")
+    total_quantity: int = Field(..., description="Cantidad total vendida")
+    records_count: int = Field(..., description="Número total de registros")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "success": True,
+                "key_store": "1|023",
+                "total_amount": 500000.25,
+                "average_amount": 10000.50,
+                "total_quantity": 5000,
+                "records_count": 50
+            }
+        }
+
+class LoginResponse(BaseModel):
+    """Modelo para respuesta de login"""
+    access_token: str
+    token_type: str
+    user_id: str
+    email: str
+    email_verified: bool
+    expires_in: int

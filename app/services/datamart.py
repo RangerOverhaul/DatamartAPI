@@ -6,7 +6,7 @@ import logging
 from app.config import settings
 from app.models.schemas import SaleRecord
 from app.models.responses import (EmployeeSalesResponse, ProductSalesResponse, StoreSalesResponse,
-                                  EmployeeSummaryResponse, ProductSummaryResponse)
+                                  EmployeeSummaryResponse, ProductSummaryResponse, StoreSummaryResponse)
 from app.utils.exceptions import InvalidDateRangeError
 
 logging.basicConfig(
@@ -58,28 +58,28 @@ class DatamartService:
                 logger.info(f"{len(df)} registros cargados")
 
             # Concatenar todos los DataFrames
-            self._data = pd.concat(dataframes, ignore_index=True)
+            self.data = pd.concat(dataframes, ignore_index=True)
 
             # Procesando columnas importantes
             logger.info("Procesando datos...")
 
             # Convertir fecha
-            self._data['KeyDate'] = pd.to_datetime(self._data['KeyDate'])
+            self.data['KeyDate'] = pd.to_datetime(self.data['KeyDate'])
 
             # Convertir Amount a float
-            self._data['Amount'] = pd.to_numeric(self._data['Amount'], errors='coerce')
+            self.data['Amount'] = pd.to_numeric(self.data['Amount'], errors='coerce')
 
             # Convertir Qty a int
-            self._data['Qty'] = pd.to_numeric(self._data['Qty'], errors='coerce').fillna(0).astype(int)
+            self.data['Qty'] = pd.to_numeric(self.data['Qty'], errors='coerce').fillna(0).astype(int)
 
             logger.info(f"Datamart cargado exitosamente")
-            logger.info(f"Total registros: {len(self._data):,}")
-            logger.info(f"Rango de fechas: {self._data['KeyDate'].min()} a {self._data['KeyDate'].max()}")
+            logger.info(f"Total registros: {len(self.data):,}")
+            logger.info(f"Rango de fechas: {self.data['KeyDate'].min()} a {self.data['KeyDate'].max()}")
 
             # Mostrar algunas estadísticas
-            logger.info(f"Empleados únicos: {self._data['KeyEmployee'].nunique()}")
-            logger.info(f"Productos únicos: {self._data['KeyProduct'].nunique()}")
-            logger.info(f"Tiendas únicas: {self._data['KeyStore'].nunique()}")
+            logger.info(f"Empleados únicos: {self.data['KeyEmployee'].nunique()}")
+            logger.info(f"Productos únicos: {self.data['KeyProduct'].nunique()}")
+            logger.info(f"Tiendas únicas: {self.data['KeyStore'].nunique()}")
 
         except FileNotFoundError as e:
             logger.error(f"Error: {e}")
@@ -124,11 +124,11 @@ class DatamartService:
 
             # Filtrar por empleado y rango de fechas
             mask = (
-                    (self._data['KeyEmployee'] == key_employee) &
-                    (self._data['KeyDate'] >= pd.Timestamp(date_start)) &
-                    (self._data['KeyDate'] <= pd.Timestamp(date_end))
+                    (self.data['KeyEmployee'] == key_employee) &
+                    (self.data['KeyDate'] >= pd.Timestamp(date_start)) &
+                    (self.data['KeyDate'] <= pd.Timestamp(date_end))
             )
-            filtered_employee = self._data[mask].copy()
+            filtered_employee = self.data[mask].copy()
 
             if len(filtered_employee) == 0:
                 logger.warning(f"No se encontraron ventas para el empleado {key_employee}")
@@ -186,11 +186,11 @@ class DatamartService:
 
         # Filtrar por producto y rango de fechas
         mask = (
-                (self._data['KeyProduct'] == key_product) &
-                (self._data['KeyDate'] >= pd.Timestamp(date_start)) &
-                (self._data['KeyDate'] <= pd.Timestamp(date_end))
+                (self.data['KeyProduct'] == key_product) &
+                (self.data['KeyDate'] >= pd.Timestamp(date_start)) &
+                (self.data['KeyDate'] <= pd.Timestamp(date_end))
         )
-        filtered_product = self._data[mask].copy()
+        filtered_product = self.data[mask].copy()
 
         if len(filtered_product) == 0:
             logger.warning(f"No se encontraron ventas para el producto {key_product}")
@@ -249,11 +249,11 @@ class DatamartService:
 
         # Filtrar por tienda y rango de fechas
         mask = (
-                (self._data['KeyStore'] == key_store) &
-                (self._data['KeyDate'] >= pd.Timestamp(date_start)) &
-                (self._data['KeyDate'] <= pd.Timestamp(date_end))
+                (self.data['KeyStore'] == key_store) &
+                (self.data['KeyDate'] >= pd.Timestamp(date_start)) &
+                (self.data['KeyDate'] <= pd.Timestamp(date_end))
         )
-        filtered_store = self._data[mask].copy()
+        filtered_store = self.data[mask].copy()
 
         if len(filtered_store) == 0:
             logger.warning(f"No se encontraron ventas para la tienda {key_store}")
@@ -318,12 +318,12 @@ class DatamartService:
 
         # Filtrar datos
         if key_employee:
-            filtered_summary_employee = self._data[self._data['KeyEmployee'] == key_employee].copy()
+            filtered_summary_employee = self.data[self.data['KeyEmployee'] == key_employee].copy()
 
             if len(filtered_summary_employee) == 0:
                 logger.warning(f"No se encontraron datos para el empleado {key_employee}")
         else:
-            filtered_summary_employee = self._data.copy()
+            filtered_summary_employee = self.data.copy()
 
         # Calcular métricas
         total_amount, total_quantity, records_count = _get_total_details(filtered_summary_employee)
@@ -383,12 +383,12 @@ class DatamartService:
 
         # Filtrar datos
         if key_product:
-            filtered_summary_product = self._data[self._data['KeyProduct'] == key_product].copy()
+            filtered_summary_product = self.data[self.data['KeyProduct'] == key_product].copy()
 
             if len(filtered_summary_product) == 0:
                 logger.warning(f"No se encontraron datos para el producto {key_product}")
         else:
-            filtered_summary_product = self._data.copy()
+            filtered_summary_product = self.data.copy()
 
         # Calcular métricas
         total_amount, total_quantity, records_count = _get_total_details(filtered_summary_product)
@@ -405,6 +405,71 @@ class DatamartService:
         return ProductSummaryResponse(
             success=True,
             key_product=key_product,
+            total_amount=total_amount,
+            average_amount=average_amount,
+            total_quantity=total_quantity,
+            records_count=records_count
+        )
+
+    def get_store_summary(
+            self,
+            key_store: Optional[str] = None
+    ) -> StoreSummaryResponse:
+        """
+        Obtiene el resumen de ventas (total y promedio) por tienda.
+
+        Args:
+            key_store: ID de la tienda (ej: "1|023") o None para todas las tiendas
+
+        Returns:
+            StoreSummaryResponse con totales, promedios y estadísticas
+
+        Example:
+            -> # Resumen de una tienda específica
+            -> service.get_store_summary("1|023")
+            StoreSummaryResponse(success=True,
+                key_store='1|023',
+                total_amount=500000.25,
+                average_amount=10000.50,
+                ...)
+
+            -> # Resumen de todas las tiendas
+            -> service.get_store_summary(None)
+            StoreSummaryResponse(Success=True,
+                key_store=None,
+                total_amount=15000000.00,
+                average_amount=45000.50,
+                ...)
+        """
+        if key_store:
+            logger.info(f"Calculando resumen de la tienda {key_store}")
+        else:
+            logger.info(f"Calculando resumen de TODAS las tiendas")
+
+        # Filtrar datos
+        if key_store:
+            filtered_summary_store = self.data[self.data['KeyStore'] == key_store].copy()
+
+            if len(filtered_summary_store) == 0:
+                logger.warning(f"No se encontraron datos para la tienda {key_store}")
+        else:
+            filtered_summary_store = self.data.copy()
+
+        # Calcular métricas
+        total_amount, total_quantity, records_count = _get_total_details(filtered_summary_store)
+
+        # Calcular promedio (evitar división por cero)
+        average_amount = total_amount / records_count if records_count > 0 else 0.0
+
+        logger.info(f"Resumen calculado:")
+        logger.info(f"Total registros: {records_count:,}")
+        logger.info(f"Total ventas: ${total_amount:,.2f}")
+        logger.info(f"Promedio por venta: ${average_amount:,.2f}")
+        logger.info(f"Cantidad total: {total_quantity:,}")
+
+        return StoreSummaryResponse(
+            success=True,
+            key_store=key_store,
             total_amount=total_amount,
             average_amount=average_amount,
             total_quantity=total_quantity,
