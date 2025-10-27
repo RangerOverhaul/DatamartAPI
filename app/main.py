@@ -143,7 +143,10 @@ async def root():
         "status": "online",
         "docs": "/docs",
         "endpoints": {
-            "sales_by_employee": "/api/v1/sales/by-employee"
+            "sales_by_employee": "/api/v1/sales/by-employee",
+            "employee_summary": "/api/v1/sales/employee-summary",
+            "sales_by_product": "/api/v1/sales/by-product",
+            "sales_by_store": "/api/v1/sales/by-store",
         }
     }
 
