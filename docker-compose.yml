@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sales-datamart-api
+    ports:
+      - "8000:8000"
+    environment:
+      - DATAMART_PATH=/datamart
+      - DEBUG=False
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./datamart:/datamart:ro  # ro = read-only para seguridad
+      - ./logs:/app/logs
+    restart: unless-stopped
+    networks:
+      - sales-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  sales-network:
+    driver: bridge
+
+volumes:
+  datamart_data:
+    driver: local

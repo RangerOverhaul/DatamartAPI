@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sales-datamart-api-dev
+    ports:
+      - "8000:8000"
+    environment:
+      - DATAMART_PATH=/datamart
+      - DEBUG=True
+      - LOG_LEVEL=DEBUG
+    volumes:
+      - ./app:/app/app
+      - ./datamart:/datamart:ro
+      - ./logs:/app/logs
+      - ./tests:/app/tests
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    restart: unless-stopped
+    networks:
+      - sales-network
+
+networks:
+  sales-network:
+    driver: bridge
