@@ -1,10 +1,11 @@
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+from pydantic_settings import BaseSettings
 
 load_dotenv()
 
-class Settings:
+class Settings(BaseSettings):
     """Configuración de la aplicación"""
 
     APP_NAME: str = "Sales Datamart API"
@@ -16,7 +17,16 @@ class Settings:
 
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
 
-    ALLOWED_ORIGINS: list = [
+    # Firebase Config
+    FIREBASE_API_KEY: str = os.getenv("FIREBASE_API_KEY", "")
+    FIREBASE_PROJECT_ID: str = os.getenv("FIREBASE_PROJECT_ID", "")
+
+    # JWT Config
+    JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY", "")
+    JWT_ALGORITHM: str = "HS256"
+    JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", 5))
+
+    ALLOWED_ORIGINS: list = [ #Local
         "http://localhost:3000",
         "http://localhost:8000",
     ]
