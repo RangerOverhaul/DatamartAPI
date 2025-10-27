@@ -214,6 +214,15 @@ def expected_employee_summary():
         'records_count': 2
     }
 
+@pytest.fixture
+def expected_product_summary():
+    """Resumen esperado para producto 1|44733"""
+    return {
+        'total_amount': -24873.95,
+        'average_amount': -24873.95,
+        'records_count': 1
+    }
+
 # ============= CONFIGURACIÓN DE AMBIENTE =============
 
 @pytest.fixture(scope="session", autouse=True)

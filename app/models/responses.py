@@ -105,3 +105,25 @@ class EmployeeSummaryResponse(BaseModel):
                 "records_count": 25
             }
         }
+
+
+class ProductSummaryResponse(BaseModel):
+    """Modelo para la respuesta de resumen de ventas por producto"""
+    success: bool = Field(default=True, description="Indica si la operación fue exitosa")
+    key_product: Optional[str] = Field(None, description="ID del producto o None para todos")
+    total_amount: float = Field(..., description="Monto total de ventas")
+    average_amount: float = Field(..., description="Promedio de ventas por transacción")
+    total_quantity: int = Field(..., description="Cantidad total vendida")
+    records_count: int = Field(..., description="Número total de registros")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "success": True,
+                "key_product": "1|44733",
+                "total_amount": 250000.75,
+                "average_amount": 5000.02,
+                "total_quantity": 2500,
+                "records_count": 50
+            }
+        }

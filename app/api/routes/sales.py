@@ -1,10 +1,9 @@
 from fastapi import APIRouter, Depends, Query, HTTPException
 from datetime import date
-from typing import Dict
+from typing import Dict, Optional
 import logging
-
 from app.models.responses import (EmployeeSalesResponse, ProductSalesResponse, StoreSalesResponse,
-                                  EmployeeSummaryResponse)
+                                  EmployeeSummaryResponse, ProductSummaryResponse)
 from app.services.datamart import get_datamart_service, DatamartService
 from app.dependencies import get_current_datamart
 
@@ -292,43 +291,7 @@ async def get_sales_by_store(
     GET /api/v1/sales/employee-summary
 ```
     """,
-    response_description="Resumen de ventas del empleado o todos los empleados",
-    responses={
-        200: {
-            "description": "Consulta exitosa",
-            "content": {
-                "application/json": {
-                    "examples": {
-                        "specific_employee": {
-                            "summary": "Resumen de empleado específico",
-                            "value": {
-                                "success": True,
-                                "key_employee": "1|343",
-                                "total_amount": 150000.50,
-                                "average_amount": 6000.02,
-                                "total_quantity": 1000,
-                                "records_count": 25
-                            }
-                        },
-                        "all_employees": {
-                            "summary": "Resumen de todos los empleados",
-                            "value": {
-                                "success": True,
-                                "key_employee": None,
-                                "total_amount": 5000000.00,
-                                "average_amount": 15000.50,
-                                "total_quantity": 50000,
-                                "records_count": 333
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        500: {
-            "description": "Error interno del servidor"
-        }
-    }
+    response_description="Resumen de ventas del empleado o todos los empleados"
 )
 async def get_employee_summary(
         key_employee: Optional[str] = Query(
@@ -353,16 +316,78 @@ async def get_employee_summary(
         return result
 
     except Exception as e:
-        logger.error(f"Error inesperado: {str(e)}")
+        logging.error(f"Error inesperado: {str(e)}")
         raise HTTPException(
             status_code=500,
             detail="Error al calcular resumen de ventas"
         )
 
-@router.get("/product-summary")
-async def get_sales_product_summary(key_product: str = None):
-    # TODO: Implement the logic to get sales product summary
-    pass
+
+@router.get(
+    "/product-summary",
+    response_model=ProductSummaryResponse,
+    summary="Resumen de ventas por producto (Total y Promedio)",
+    description="""
+    Calcula el total y promedio de ventas por producto.
+
+    Parámetros:
+    - `key_product`: (Opcional) ID del producto en formato "1|44733"
+      - Si se proporciona: Resumen de ese producto específico
+      - Si NO se proporciona: Resumen de TODOS los productos
+
+    Retorna:
+    - Total de ventas (suma de todos los montos)
+    - Promedio de ventas por transacción
+    - Cantidad total vendida
+    - Número total de registros
+
+    Casos de uso:
+    - Identificar productos más vendidos
+    - Análisis de rendimiento de productos
+    - Planificación de inventario
+    - Evaluación de rentabilidad por producto
+    - KPIs de productos
+    - Tendencias de consumo
+
+    Ejemplos de uso:
+```
+    # Resumen de un producto específico
+    GET /api/v1/sales/product-summary?key_product=1|44733
+
+    # Resumen de todos los productos (sin parámetro)
+    GET /api/v1/sales/product-summary
+```
+    """,
+    response_description="Resumen de ventas del producto o todos los productos"
+)
+async def get_product_summary(
+        key_product: Optional[str] = Query(
+            None,
+            description="ID del producto (formato: '1|44733'). Dejar vacío para resumen de todos",
+            example="1|44733"
+        ),
+        datamart_service: DatamartService = Depends(get_datamart_service)
+) -> ProductSummaryResponse:
+    """
+    Endpoint para obtener resumen de ventas (total y promedio) por producto.
+
+    Si key_product es None, retorna el resumen de todos los productos.
+    Si key_product tiene valor, retorna solo el resumen de ese producto.
+    """
+    try:
+        # Consultar resumen
+        result = datamart_service.get_product_summary(
+            key_product=key_product
+        )
+
+        return result
+
+    except Exception as e:
+        logging.error(f"Error inesperado: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail="Error al calcular resumen de ventas"
+        )
 
 @router.get("/employee-summary")
 async def get_sales_employee_summary(key_employee: str = None):

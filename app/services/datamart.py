@@ -6,7 +6,7 @@ import logging
 from app.config import settings
 from app.models.schemas import SaleRecord
 from app.models.responses import (EmployeeSalesResponse, ProductSalesResponse, StoreSalesResponse,
-                                  EmployeeSummaryResponse)
+                                  EmployeeSummaryResponse, ProductSummaryResponse)
 from app.utils.exceptions import InvalidDateRangeError
 
 logging.basicConfig(
@@ -340,6 +340,71 @@ class DatamartService:
         return EmployeeSummaryResponse(
             success=True,
             key_employee=key_employee,
+            total_amount=total_amount,
+            average_amount=average_amount,
+            total_quantity=total_quantity,
+            records_count=records_count
+        )
+
+    def get_product_summary(
+            self,
+            key_product: Optional[str] = None
+    ) -> ProductSummaryResponse:
+        """
+        Obtiene el resumen de ventas (total y promedio) por producto.
+
+        Args:
+            key_product: ID del producto (ej: "1|44733") o None para todos los productos
+
+        Returns:
+            ProductSummaryResponse con totales, promedios y estadísticas
+
+        Example:
+            # Resumen de un producto específico
+            -> service.get_product_summary("1|44733")
+            ProductSummaryResponse(success=True,
+                key_product='1|44733',
+                total_amount=250000.75,
+                average_amount=5000.02,
+                ...)
+
+            # Resumen de todos los productos
+            -> service.get_product_summary(None)
+            ProductSummaryResponse(success=True,
+                key_product=None,
+                total_amount=10000000.00,
+                average_amount=30000.50,
+                ...)
+        """
+        if key_product:
+            logger.info(f"Calculando resumen del producto {key_product}")
+        else:
+            logger.info(f"Calculando resumen de TODOS los productos")
+
+        # Filtrar datos
+        if key_product:
+            filtered_summary_product = self._data[self._data['KeyProduct'] == key_product].copy()
+
+            if len(filtered_summary_product) == 0:
+                logger.warning(f"No se encontraron datos para el producto {key_product}")
+        else:
+            filtered_summary_product = self._data.copy()
+
+        # Calcular métricas
+        total_amount, total_quantity, records_count = _get_total_details(filtered_summary_product)
+
+        # Calcular promedio (evitar división por cero)
+        average_amount = total_amount / records_count if records_count > 0 else 0.0
+
+        logger.info(f"Resumen calculado:")
+        logger.info(f"Total registros: {records_count:,}")
+        logger.info(f"Total ventas: ${total_amount:,.2f}")
+        logger.info(f"Promedio por venta: ${average_amount:,.2f}")
+        logger.info(f"Cantidad total: {total_quantity:,}")
+
+        return ProductSummaryResponse(
+            success=True,
+            key_product=key_product,
             total_amount=total_amount,
             average_amount=average_amount,
             total_quantity=total_quantity,
