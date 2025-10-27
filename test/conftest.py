@@ -205,6 +205,15 @@ def store_sales_single_day():
         'expected_sales_count': 1
     }
 
+@pytest.fixture
+def expected_employee_summary():
+    """Resumen esperado para empleado 1|343"""
+    return {
+        'total_amount': -23373.45,  # Ajustar según datos reales
+        'average_amount': -11686.725,
+        'records_count': 2
+    }
+
 # ============= CONFIGURACIÓN DE AMBIENTE =============
 
 @pytest.fixture(scope="session", autouse=True)

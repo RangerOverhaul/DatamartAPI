@@ -5,7 +5,8 @@ import logging
 
 from app.config import settings
 from app.models.schemas import SaleRecord
-from app.models.responses import EmployeeSalesResponse, ProductSalesResponse, StoreSalesResponse
+from app.models.responses import (EmployeeSalesResponse, ProductSalesResponse, StoreSalesResponse,
+                                  EmployeeSummaryResponse)
 from app.utils.exceptions import InvalidDateRangeError
 
 logging.basicConfig(
@@ -276,6 +277,73 @@ class DatamartService:
             total_quantity=total_quantity,
             records_count=records_count,
             sales=sales_list_store
+        )
+
+    def get_employee_summary(
+            self,
+            key_employee: Optional[str] = None
+    ) -> EmployeeSummaryResponse:
+        """
+        Obtiene el resumen de ventas (total y promedio) por empleado.
+
+        Args:
+            key_employee: ID del empleado (ej: "1|343") o None para todos los empleados
+
+        Returns:
+            EmployeeSummaryResponse con totales, promedios y estadísticas
+
+        Example:
+            # Resumen de un empleado específico
+            -> service.get_employee_summary("1|343")
+            EmployeeSummaryResponse(
+                success=True,
+                key_employee='1|343',
+                total_amount=150000.50,
+                average_amount=6000.02,
+                ...
+            )
+
+            # Resumen de todos los empleados
+            -> service.get_employee_summary(None)
+            EmployeeSummaryResponse(success=True,
+                key_employee=None,
+                total_amount=5000000.00,
+                average_amount=15000.50,
+                ...)
+        """
+        if key_employee:
+            logger.info(f"Calculando resumen del empleado {key_employee}")
+        else:
+            logger.info(f"Calculando resumen de TODOS los empleados")
+
+        # Filtrar datos
+        if key_employee:
+            filtered_summary_employee = self._data[self._data['KeyEmployee'] == key_employee].copy()
+
+            if len(filtered_summary_employee) == 0:
+                logger.warning(f"No se encontraron datos para el empleado {key_employee}")
+        else:
+            filtered_summary_employee = self._data.copy()
+
+        # Calcular métricas
+        total_amount, total_quantity, records_count = _get_total_details(filtered_summary_employee)
+
+        # Calcular promedio (evitar división por cero)
+        average_amount = total_amount / records_count if records_count > 0 else 0.0
+
+        logger.info(f"Resumen calculado:")
+        logger.info(f"Total registros: {records_count:,}")
+        logger.info(f"Total ventas: ${total_amount:,.2f}")
+        logger.info(f"Promedio por venta: ${average_amount:,.2f}")
+        logger.info(f"Cantidad total: {total_quantity:,}")
+
+        return EmployeeSummaryResponse(
+            success=True,
+            key_employee=key_employee,
+            total_amount=total_amount,
+            average_amount=average_amount,
+            total_quantity=total_quantity,
+            records_count=records_count
         )
 
 # Instancia singleton del servicio
