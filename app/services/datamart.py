@@ -340,8 +340,8 @@ class DatamartService:
         return EmployeeSummaryResponse(
             success=True,
             key_employee=key_employee,
-            total_amount=total_amount,
-            average_amount=average_amount,
+            total_amount=round(total_amount, 2),
+            average_amount=round(average_amount, 2),
             total_quantity=total_quantity,
             records_count=records_count
         )
@@ -405,8 +405,8 @@ class DatamartService:
         return ProductSummaryResponse(
             success=True,
             key_product=key_product,
-            total_amount=total_amount,
-            average_amount=average_amount,
+            total_amount=round(total_amount, 2),
+            average_amount=round(average_amount, 2),
             total_quantity=total_quantity,
             records_count=records_count
         )
@@ -470,8 +470,8 @@ class DatamartService:
         return StoreSummaryResponse(
             success=True,
             key_store=key_store,
-            total_amount=total_amount,
-            average_amount=average_amount,
+            total_amount=round(total_amount, 2),
+            average_amount=round(average_amount, 2),
             total_quantity=total_quantity,
             records_count=records_count
         )
